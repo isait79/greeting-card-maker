@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greeting Card Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Poppins:wght@300;400;600&family=Amiri:wght@400;700&family=Cairo:wght@300;400;600&family=Tajawal:wght@300;400;500&display=swap');
+        
+        .card-canvas {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            min-height: 300px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: #f8f9fa;
+        }
+        
+        .uploaded-image {
+            width: 100%;
+            height: auto;
+            min-height: 300px;
+            max-height: 600px;
+            object-fit: contain;
+            display: block;
+        }
+        
+        .text-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: black;
+            font-family: 'Thoma', cursive;
+            font-size: 2rem;
+            max-width: 90%;
+            word-wrap: break-word;
+            cursor: move;
+            user-select: none;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .text-overlay:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .text-overlay.dragging {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .ios-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .ios-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .ios-button {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+        }
+        
+        .ios-button:hover {
+            background: linear-gradient(135deg, #0051D5 0%, #003D99 100%);
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+        }
+        
+        .ios-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .ios-input:focus {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="ios-bg min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2" style="font-family: 'Dancing Script', cursive;">✨ Greeting Card Maker ✨</h1>
+            <p class="text-gray-600 text-lg">Create beautiful personalized cards for your friends and family</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Controls Panel -->
+            <div class="ios-card rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800" style="font-family: 'Poppins', sans-serif;">Customize Your Card</h2>
+                
+                <!-- Photo Upload -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📸 Upload Photo</label>
+                    <input type="file" id="photoUpload" accept="image/*" 
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer ios-input rounded-2xl">
+                </div>
+
+                <!-- Text Input -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">✍️ Your Name</label>
+                    <textarea id="cardText" placeholder="أحمد محمد / Ahmed Mohamed" 
+                              class="w-full p-4 ios-input rounded-2xl resize-none"
+                              rows="1"></textarea>
+                </div>
+
+                <!-- Text Format & Effects -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📝 Text Format & Effects</label>
+                    <div class="flex gap-3 items-center">
+                        <button type="button" id="boldBtn" class="px-4 py-3 ios-input rounded-2xl hover:bg-blue-50 transition-all font-bold">B</button>
+                        <button type="button" id="italicBtn" class="px-4 py-3 ios-input rounded-2xl hover:bg-blue-50 transition-all italic">I</button>
+                        <button type="button" id="underlineBtn" class="px-4 py-3 ios-input rounded-2xl hover:bg-blue-50 transition-all underline">U</button>
+                        <button type="button" id="shadowBtn" class="px-4 py-3 ios-input rounded-2xl hover:bg-blue-50 transition-all text-sm" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Shadow</button>
+                        <div class="flex-1 ml-4">
+                            <input type="range" id="textSize" min="16" max="48" value="32" 
+                                   class="w-full h-3 bg-gray-200 rounded-full cursor-pointer appearance-none slider">
+                            <div class="text-center text-xs text-gray-600 mt-1">Size: <span id="sizeDisplay">32px</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Style Options -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🎨 Text Style</label>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <select id="fontFamily" class="p-3 ios-input rounded-2xl">
+                            <option value="Thoma">Thoma (Default)</option>
+                            <option value="Dancing Script">Dancing Script (English)</option>
+                            <option value="Poppins">Poppins (English)</option>
+                            <option value="Amiri">Amiri (عربي)</option>
+                            <option value="Cairo">Cairo (عربي)</option>
+                            <option value="Tajawal">Tajawal (عربي)</option>
+                            <option value="Arial">Arial (Both)</option>
+                        </select>
+                        <input type="color" id="textColor" value="#000000" 
+                               class="w-full h-12 ios-input rounded-2xl cursor-pointer">
+                    </div>
+                    
+
+                    
+                    <!-- Photo Color Palette -->
+                    <div id="photoColorPalette" class="hidden">
+                        <div id="colorPalette" class="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-2xl ios-input">
+                            <!-- Colors will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Text Position -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📍 Text Position</label>
+                    <div class="p-4 bg-blue-50 rounded-2xl text-sm text-blue-700 ios-input">
+                        <p class="font-medium">🖱️ Drag & Drop Text</p>
+                        <p class="text-xs mt-1">Click and drag the text on your card to move it anywhere you want!</p>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Card Preview -->
+            <div class="ios-card rounded-3xl p-6 shadow-2xl">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800" style="font-family: 'Poppins', sans-serif;">Preview</h2>
+                
+                <div class="card-canvas" id="cardPreview">
+                    <div class="w-full h-full bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="text-6xl mb-4">🎨</div>
+                            <p class="text-lg opacity-80">Upload a photo to get started!</p>
+                        </div>
+                    </div>
+                    <div id="textOverlay" class="text-overlay" style="display: none;">أحمد محمد</div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600 mb-4">Your card will appear here as you customize it</p>
+                    <!-- Download Button -->
+                    <button onclick="downloadCard()" 
+                            class="w-full ios-button text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-200">
+                        💾 Download Your Card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let textPosition = 'center';
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let textElement = null;
+        let isBold = false;
+        let isItalic = false;
+        let isUnderline = false;
+        let hasShadow = false;
+
+
+
+        // Handle photo upload
+        document.getElementById('photoUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = e.target.result;
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle text input
+        document.getElementById('cardText').addEventListener('input', updatePreview);
+        document.getElementById('fontFamily').addEventListener('change', updatePreview);
+        document.getElementById('textColor').addEventListener('change', updatePreview);
+        document.getElementById('textSize').addEventListener('input', function() {
+            document.getElementById('sizeDisplay').textContent = this.value + 'px';
+            updatePreview();
+        });
+
+        // Handle text formatting buttons
+        document.getElementById('boldBtn').addEventListener('click', function() {
+            isBold = !isBold;
+            this.classList.toggle('bg-blue-500');
+            this.classList.toggle('text-white');
+            updatePreview();
+        });
+
+        document.getElementById('italicBtn').addEventListener('click', function() {
+            isItalic = !isItalic;
+            this.classList.toggle('bg-blue-500');
+            this.classList.toggle('text-white');
+            updatePreview();
+        });
+
+        document.getElementById('underlineBtn').addEventListener('click', function() {
+            isUnderline = !isUnderline;
+            this.classList.toggle('bg-blue-500');
+            this.classList.toggle('text-white');
+            updatePreview();
+        });
+
+        document.getElementById('shadowBtn').addEventListener('click', function() {
+            hasShadow = !hasShadow;
+            this.classList.toggle('bg-blue-500');
+            this.classList.toggle('text-white');
+            updatePreview();
+        });
+
+
+
+
+
+        function extractColorsFromImage(imageSrc) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = 100;
+                canvas.height = 100;
+                ctx.drawImage(img, 0, 0, 100, 100);
+                
+                const imageData = ctx.getImageData(0, 0, 100, 100);
+                const data = imageData.data;
+                const colorMap = {};
+                
+                // Sample colors from the image
+                for (let i = 0; i < data.length; i += 16) { // Sample every 4th pixel
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const alpha = data[i + 3];
+                    
+                    if (alpha > 128) { // Only consider non-transparent pixels
+                        const color = `rgb(${r},${g},${b})`;
+                        colorMap[color] = (colorMap[color] || 0) + 1;
+                    }
+                }
+                
+                // Get the most common colors
+                const sortedColors = Object.entries(colorMap)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 8)
+                    .map(([color]) => color);
+                
+                displayColorPalette(sortedColors);
+            };
+            
+            img.src = imageSrc;
+        }
+        
+        function displayColorPalette(colors) {
+            const palette = document.getElementById('colorPalette');
+            const paletteContainer = document.getElementById('photoColorPalette');
+            
+            palette.innerHTML = '';
+            
+            colors.forEach(color => {
+                const colorButton = document.createElement('button');
+                colorButton.className = 'w-8 h-8 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform cursor-pointer';
+                colorButton.style.backgroundColor = color;
+                colorButton.title = color;
+                
+                colorButton.addEventListener('click', () => {
+                    // Convert RGB to hex for the color input
+                    const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                    if (rgbMatch) {
+                        const hex = '#' + [rgbMatch[1], rgbMatch[2], rgbMatch[3]]
+                            .map(x => parseInt(x).toString(16).padStart(2, '0'))
+                            .join('');
+                        document.getElementById('textColor').value = hex;
+                        updatePreview();
+                    }
+                });
+                
+                palette.appendChild(colorButton);
+            });
+            
+            paletteContainer.classList.remove('hidden');
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('cardPreview');
+            const text = document.getElementById('cardText').value;
+            const fontFamily = document.getElementById('fontFamily').value;
+            const textColor = document.getElementById('textColor').value;
+            const textSize = document.getElementById('textSize').value;
+
+            // Update background
+            if (currentImage) {
+                preview.innerHTML = `<img src="${currentImage}" class="uploaded-image" alt="Card background">`;
+                // Extract colors from the uploaded image
+                extractColorsFromImage(currentImage);
+            } else {
+                preview.innerHTML = `
+                    <div class="w-full h-full bg-gradient-to-br from-pink-300 via-purple-300 to-indigo-400 flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="text-6xl mb-4">🎨</div>
+                            <p class="text-lg opacity-80">Upload a photo to get started!</p>
+                        </div>
+                    </div>
+                `;
+                // Hide color palette when no image
+                document.getElementById('photoColorPalette').classList.add('hidden');
+            }
+
+            // Add text overlay
+            if (text.trim()) {
+                const overlay = document.createElement('div');
+                overlay.className = 'text-overlay';
+                overlay.style.fontFamily = fontFamily;
+                
+                overlay.style.color = textColor;
+                
+                overlay.style.fontSize = textSize + 'px';
+                overlay.style.fontWeight = isBold ? 'bold' : 'normal';
+                overlay.style.fontStyle = isItalic ? 'italic' : 'normal';
+                overlay.style.textDecoration = isUnderline ? 'underline' : 'none';
+                overlay.style.textShadow = hasShadow ? '2px 2px 4px rgba(0,0,0,0.7)' : 'none';
+                overlay.textContent = text;
+                
+                // Preserve position if text was previously positioned
+                if (textElement && textElement.style.left && textElement.style.top) {
+                    overlay.style.left = textElement.style.left;
+                    overlay.style.top = textElement.style.top;
+                    overlay.style.transform = 'translate(-50%, -50%)';
+                } else {
+                    // Default lower position
+                    overlay.style.top = '75%';
+                    overlay.style.left = '50%';
+                }
+                
+                // Add drag functionality for both mouse and touch
+                overlay.addEventListener('mousedown', startDrag);
+                overlay.addEventListener('touchstart', startDrag, { passive: false });
+                
+                preview.appendChild(overlay);
+                textElement = overlay;
+            } else {
+                textElement = null;
+            }
+        }
+
+        // Drag functionality with mobile touch support
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+            textElement.classList.add('dragging');
+            
+            const rect = textElement.getBoundingClientRect();
+            const parentRect = textElement.parentElement.getBoundingClientRect();
+            
+            // Handle both mouse and touch events
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            dragOffset.x = clientX - rect.left - rect.width / 2;
+            dragOffset.y = clientY - rect.top - rect.height / 2;
+            
+            // Add both mouse and touch event listeners
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        }
+        
+        function drag(e) {
+            if (!isDragging || !textElement) return;
+            
+            e.preventDefault(); // Prevent scrolling on mobile
+            
+            const parentRect = textElement.parentElement.getBoundingClientRect();
+            
+            // Handle both mouse and touch events
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = ((clientX - dragOffset.x - parentRect.left) / parentRect.width) * 100;
+            const y = ((clientY - dragOffset.y - parentRect.top) / parentRect.height) * 100;
+            
+            // Keep text within bounds
+            const clampedX = Math.max(10, Math.min(90, x));
+            const clampedY = Math.max(10, Math.min(90, y));
+            
+            textElement.style.left = clampedX + '%';
+            textElement.style.top = clampedY + '%';
+            textElement.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        function stopDrag() {
+            isDragging = false;
+            if (textElement) {
+                textElement.classList.remove('dragging');
+            }
+            // Remove both mouse and touch event listeners
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+
+
+        function downloadCard() {
+            if (!currentImage) {
+                alert('Please upload a photo first! 📸');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Get actual image dimensions if available
+            const imgElement = document.querySelector('.uploaded-image');
+            if (imgElement) {
+                canvas.width = imgElement.naturalWidth || 800;
+                canvas.height = imgElement.naturalHeight || 600;
+            } else {
+                canvas.width = 800;
+                canvas.height = 600;
+            }
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // Handle CORS issues
+            img.onload = function() {
+                try {
+                    // Draw image
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Draw text
+                    const text = document.getElementById('cardText').value;
+                    if (text.trim()) {
+                        const fontFamily = document.getElementById('fontFamily').value;
+                        const textColor = document.getElementById('textColor').value;
+                        const baseTextSize = parseInt(document.getElementById('textSize').value);
+                        const scaleFactor = Math.max(canvas.width, canvas.height) / 400;
+                        const textSize = baseTextSize * scaleFactor;
+                        
+                        const fontWeight = isBold ? 'bold' : 'normal';
+                        const fontStyle = isItalic ? 'italic' : 'normal';
+                        
+                        // Set font with fallback
+                        ctx.font = `${fontStyle} ${fontWeight} ${textSize}px ${fontFamily}, Arial, sans-serif`;
+                        ctx.fillStyle = textColor;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Apply shadow effect
+                        if (hasShadow) {
+                            ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                            ctx.shadowBlur = 4;
+                            ctx.shadowOffsetX = 2;
+                            ctx.shadowOffsetY = 2;
+                        } else {
+                            ctx.shadowColor = 'transparent';
+                            ctx.shadowBlur = 0;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                        }
+                        
+                        let x = canvas.width / 2;
+                        let y = canvas.height * 0.75; // Default to 75% down
+                        
+                        // Use actual text position if it was moved
+                        if (textElement && textElement.style.left && textElement.style.top) {
+                            x = (parseFloat(textElement.style.left) / 100) * canvas.width;
+                            y = (parseFloat(textElement.style.top) / 100) * canvas.height;
+                        }
+                        
+                        // Draw underline if needed
+                        if (isUnderline) {
+                            const textWidth = ctx.measureText(text).width;
+                            ctx.beginPath();
+                            ctx.moveTo(x - textWidth/2, y + textSize/6);
+                            ctx.lineTo(x + textWidth/2, y + textSize/6);
+                            ctx.strokeStyle = textColor;
+                            ctx.lineWidth = Math.max(2, scaleFactor);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.fillText(text, x, y);
+                    }
+                    
+                    // Create download link and force download to local files
+                    canvas.toBlob(function(blob) {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = 'greeting-card.png';
+                        link.href = url;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Clean up the URL object
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                    }, 'image/png', 1.0);
+                    
+                } catch (error) {
+                    console.error('Download error:', error);
+                    alert('Sorry, there was an issue downloading your card. Please try again!');
+                }
+            };
+            
+            img.onerror = function() {
+                alert('Sorry, there was an issue processing your image. Please try uploading a different photo!');
+            };
+            
+            img.src = currentImage;
+        }
+
+        // Initialize
+        updatePreview();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97921bf310f31c29',t:'MTc1Njg2OTYwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
